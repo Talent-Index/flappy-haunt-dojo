@@ -1,10 +1,10 @@
 [world]
-name = "Dojo intro"
-description = "A simple intro to Dojo."
-seed = "dojo_intro"
+name = "Flappy Haunt"
+description = "Halloween-themed Flappy Bird game on Dojo Engine."
+seed = "flappy_haunt"
 
 [namespace]
-default = "di"
+default = "fh"
 
 [env]
 rpc_url = "http://localhost:5050/"
@@ -13,3 +13,4 @@ private_key = "0xc5b2fcab997346f3ea1c00b002ecf6f382c5f9c9659a3894eb783c5320f912"
 
 [writers]
 "di" = ["di-actions"]
+"fh" = ["fh-flappy_actions"]
