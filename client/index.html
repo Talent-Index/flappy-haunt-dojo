@@ -1,102 +1,123 @@
 <!doctype html>
-
 <html>
-  <head>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
-    <style></style>
-  </head>
-
-  <body>
-    <h1>Spawn and move</h1>
-
-    <button id="controller-button">Connect</button>
-
-    <div>
-      <div id="position-display" class="display">Position: (0, 0)</div>
-      <div id="moves-display" class="display">Moves remaining: 0</div>
-
-      <button id="spawn-button" disabled>Spawn</button>
-      <button id="move-random-button" disabled>Move random</button>
-      <div>
-        <button id="up-button" disabled>Up</button>
-        <button id="down-button" disabled>Down</button>
-        <button id="left-button" disabled>Left</button>
-        <button id="right-button" disabled>Right</button>
+<head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flappy Haunt 🎃</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <div style="position:relative">
+      <canvas id="game" width="360" height="640" aria-label="Flappy Haunt game canvas"></canvas>
+      <div class="hud">
+        <div class="score" id="score">0</div>
+        <div class="best" id="best">Best: 0</div>
+        <div class="lives" id="lives">❤️</div>
+        <button class="btn primary" id="btnPlay">Play</button>
+        <button class="btn" id="btnPause">Pause</button>
+        <button class="btn" id="btnRestart">Restart</button>
+        <button class="btn wallet-btn" id="walletBtn">Connect Wallet</button>
       </div>
-      <div style="margin-top: 20px;">
-        <a href="https://book.dojoengine.org/" target="_blank" rel="noopener noreferrer">Dojo Documentation</a>
+      <div class="overlay hidden" id="overlay">
+        <div class="panel">
+          <h1>Flappy Haunt 🎃</h1>
+          <p>Tap or press Space/Up to flap.</p>
+          <p class="small">Connect wallet to save high scores on Starknet.</p>
+          <p id="overlayText">Game Over</p>
+          <p id="scoreMessage" style="display:none; color:#32ff64; margin:10px 0; font-size:14px;"></p>
+          <button class="btn primary" id="restart">Play Again</button>
+          <button class="btn accent" id="submitScore" style="display:none; margin-top:10px;">Submit Score 🏆</button>
+        </div>
       </div>
     </div>
+  </div>
 
-    <script type="module">
-      import Controller from '@cartridge/controller';
-      import { init, ToriiQueryBuilder, KeysClause } from '@dojoengine/sdk';
+  <script type="module">
+    import Controller from '@cartridge/controller';
+    import { init } from '@dojoengine/sdk';
+    import controllerOpts from './controller.js';
+    import { FlappyHaunt } from './flappyHaunt.js';
+    import manifest from '../contracts/manifest_dev.json' assert { type: 'json' };
 
-      import controllerOpts from './controller.js';
-      import { initGame, updateFromEntitiesData } from './game.js';
+    const DOMAIN_SEPERATOR = {
+      name: 'flappy-haunt',
+      version: '1.0',
+      chainId: 'KATANA',
+      revision: '1',
+    };
 
-      import manifest from '../contracts/manifest_dev.json' assert { type: 'json' };
+    let account = null;
+    let game = null;
+    let torii = null;
 
-      const DOMAIN_SEPERATOR = {
-        name: 'dojo-intro',
-        version: '1.0',
-        chainId: 'KATANA',
-        revision: '1',
-      };
+    const controller = new Controller(controllerOpts);
 
-      async function run(account) {
-        const torii = await init({
+    // Start game without blockchain first
+    game = new FlappyHaunt(document.getElementById('game'));
+    
+    // Wallet connection
+    document.getElementById('walletBtn').onclick = async () => {
+      try {
+        account = await controller.connect();
+        document.getElementById('walletBtn').textContent = account.address.slice(0, 6) + '...' + account.address.slice(-4);
+        document.getElementById('walletBtn').style.backgroundColor = '#4CAF50';
+        
+        // Initialize Dojo
+        torii = await init({
           client: {
             worldAddress: manifest.world.address,
             toriiUrl: 'http://localhost:8080',
           },
           domain: DOMAIN_SEPERATOR,
         });
-
-        initGame(account, manifest);
-
-        // Subscribe to model updates
-        const [_, subscription] = await torii.subscribeEntityQuery({
-          query: new ToriiQueryBuilder().withClause(
-            KeysClause(['di-Position', 'di-Moves'], [account.address], 'FixedLen').build(),
-          ),
-          callback: ({ data, error }) => {
-            if (data) {
-              updateFromEntitiesData(data);
-            }
-            if (error) {
-              console.error(error);
-            }
-          },
-        });
-
-        // Unsubscribe on window exit
-        window.addEventListener('beforeunload', () => {
-          if (subscription) {
-            subscription.cancel();
-          }
-        });
+        
+        console.log('Connected to Dojo');
+      } catch (error) {
+        console.error('Failed to connect:', error);
+        document.getElementById('walletBtn').textContent = 'Connection Failed';
       }
+    };
 
-      const controller = new Controller(controllerOpts);
+    // Submit high score
+    document.getElementById('submitScore').onclick = async () => {
+      if (!account) {
+        alert('Please connect wallet first');
+        return;
+      }
+      
+      try {
+        const score = game.getFinalScore();
+        document.getElementById('submitScore').textContent = 'Submitting...';
+        document.getElementById('submitScore').disabled = true;
+        
+        const tx = await account.execute({
+          contractAddress: manifest.contracts.find(c => c.tag === 'fh-actions')?.address,
+          entrypoint: 'submit_score',
+          calldata: [score],
+        });
+        
+        document.getElementById('scoreMessage').textContent = 'Score submitted! TX: ' + tx.transaction_hash.slice(0, 10) + '...';
+        document.getElementById('scoreMessage').style.display = 'block';
+        document.getElementById('submitScore').style.display = 'none';
+      } catch (error) {
+        console.error('Submit failed:', error);
+        document.getElementById('scoreMessage').textContent = 'Submission failed';
+        document.getElementById('scoreMessage').style.color = '#ff5500';
+        document.getElementById('scoreMessage').style.display = 'block';
+        document.getElementById('submitScore').disabled = false;
+        document.getElementById('submitScore').textContent = 'Submit Score 🏆';
+      }
+    };
 
-      document.getElementById('controller-button').onclick = async () => {
-        try {
-          let account = await controller.connect();
-
-          document.getElementById('controller-button').textContent = 'Connected';
-          document.getElementById('controller-button').style.backgroundColor = '#4CAF50';
-          document.getElementById('spawn-button').disabled = false;
-
-          run(account).catch((error) => {
-            console.error(error);
-          });
-        } catch (error) {
-          console.error('Failed to connect:', error);
-          document.getElementById('controller-button').textContent = 'Connection Failed';
-          document.getElementById('controller-button').style.backgroundColor = '#f44336';
-        }
-      };
-    </script>
-  </body>
+    // Game over callback
+    game.onGameOver = (score) => {
+      if (account && score >= 5) {
+        document.getElementById('submitScore').style.display = 'block';
+        document.getElementById('submitScore').disabled = false;
+        document.getElementById('submitScore').textContent = 'Submit Score 🏆';
+      }
+    };
+  </script>
+</body>
 </html>

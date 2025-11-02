@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dojo_intro"
+name = "flappy_haunt"
 version = "1.7.2"
 dependencies = [
  "dojo",
