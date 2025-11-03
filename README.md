@@ -18,8 +18,14 @@ A Halloween-themed Flappy Bird clone built with [Dojo Engine](https://book.dojoe
 - **Physics**: Gravity 650, Jump -320 (identical to original game)
 
 ## 🕹️ Gameplay Screenshots
-![Gameplay](client/Screenshot 2025-11-03 at 13.24.36.png)
-![Gameplay](client/Screenshot 2025-11-03 at 13.24.23.png)
+
+<p align="center">
+  <img src="client/Screenshot 2025-11-03 at 13.24.36.png" alt="Gameplay" width="500"/>
+</p>
+
+<p align="center">
+  <img src="client/Screenshot 2025-11-03 at 13.24.23.png" alt="Gameplay" width="500"/>
+</p>
 
 ### Visual Effects
 - Dark purple night sky with twinkling stars
