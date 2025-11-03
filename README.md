@@ -17,6 +17,10 @@ A Halloween-themed Flappy Bird clone built with [Dojo Engine](https://book.dojoe
 - **Progressive Difficulty**: Pipe gaps shrink over time
 - **Physics**: Gravity 650, Jump -320 (identical to original game)
 
+## 🕹️ Gameplay Screenshots
+(assets/Screenshot 2025-11-03 at 13.24.36)
+(assets/Screenshot 2025-11-03 at 13.24.23)
+
 ### Visual Effects
 - Dark purple night sky with twinkling stars
 - Moon with dripping green toxic goo
