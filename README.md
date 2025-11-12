@@ -2,6 +2,8 @@
 
 A Halloween-themed Flappy Bird clone built with [Dojo Engine](https://book.dojoengine.org/) on Starknet.
 
+**Live deployment link**: [https://flappy-haunt.netlify.app/]
+
 **Migrated from**: [flapi repository](https://github.com/Talent-Index/flapi) (Vanilla JS + Dojo Toolkit AMD)  
 **Migration docs**: See [MIGRATION-WINDSURF.md](./MIGRATION-WINDSURF.md)
 
